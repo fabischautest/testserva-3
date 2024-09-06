@@ -16,11 +16,6 @@
     <script>
         let camera, scene, renderer, controls;
         let objects = [];
-        let velocity = new THREE.Vector3();
-        let direction = new THREE.Vector3();
-        let gravity = -9.8;
-        let canJump = false;
-        let prevTime = performance.now();
 
         init();
         animate();
@@ -37,7 +32,6 @@
 
             // Camera
             camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.y = 1.6; // Set initial height of the camera
 
             // Lighting
             const light = new THREE.HemisphereLight(0xffffff, 0x444444);
@@ -73,58 +67,33 @@
             });
 
             // Player movement
+            const onKeyDown = function (event) {
+                switch (event.code) {
+                    case 'ArrowUp':
+                    case 'KeyW':
+                        controls.moveForward(0.1);
+                        break;
+                    case 'ArrowLeft':
+                    case 'KeyA':
+                        controls.moveRight(-0.1);
+                        break;
+                    case 'ArrowDown':
+                    case 'KeyS':
+                        controls.moveForward(-0.1);
+                        break;
+                    case 'ArrowRight':
+                    case 'KeyD':
+                        controls.moveRight(0.1);
+                        break;
+                    case 'Space':
+                        controls.getObject().position.y += 0.2;
+                        break;
+                }
+            };
+
             document.addEventListener('keydown', onKeyDown);
-            document.addEventListener('keyup', onKeyUp);
 
             window.addEventListener('resize', onWindowResize);
-        }
-
-        function onKeyDown(event) {
-            switch (event.code) {
-                case 'ArrowUp':
-                case 'KeyW':
-                    direction.z = -1;
-                    break;
-                case 'ArrowLeft':
-                case 'KeyA':
-                    direction.x = -1;
-                    break;
-                case 'ArrowDown':
-                case 'KeyS':
-                    direction.z = 1;
-                    break;
-                case 'ArrowRight':
-                case 'KeyD':
-                    direction.x = 1;
-                    break;
-                case 'Space':
-                    if (canJump) {
-                        velocity.y = 10; // Adjust jump force
-                        canJump = false;
-                    }
-                    break;
-            }
-        }
-
-        function onKeyUp(event) {
-            switch (event.code) {
-                case 'ArrowUp':
-                case 'KeyW':
-                    direction.z = 0;
-                    break;
-                case 'ArrowLeft':
-                case 'KeyA':
-                    direction.x = 0;
-                    break;
-                case 'ArrowDown':
-                case 'KeyS':
-                    direction.z = 0;
-                    break;
-                case 'ArrowRight':
-                case 'KeyD':
-                    direction.x = 0;
-                    break;
-            }
         }
 
         function onWindowResize() {
@@ -135,30 +104,6 @@
 
         function animate() {
             requestAnimationFrame(animate);
-
-            // Calculate movement
-            const time = performance.now();
-            const delta = (time - prevTime) / 1000;
-
-            velocity.x -= velocity.x * 10.0 * delta;
-            velocity.z -= velocity.z * 10.0 * delta;
-            velocity.y -= gravity * delta;
-
-            const moveSpeed = 5; // Movement speed
-            direction.normalize().multiplyScalar(moveSpeed * delta);
-
-            camera.position.add(direction);
-            camera.position.y += velocity.y * delta;
-
-            // Check if the player is on the ground
-            if (camera.position.y < 1.6) {
-                camera.position.y = 1.6;
-                velocity.y = 0;
-                canJump = true;
-            }
-
-            prevTime = time;
-
             renderer.render(scene, camera);
         }
     </script>
