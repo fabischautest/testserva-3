@@ -16,14 +16,11 @@
     <script>
         let camera, scene, renderer, controls;
         let objects = [];
-        let moveForward = false;
-        let moveBackward = false;
-        let moveLeft = false;
-        let moveRight = false;
+        let velocity = new THREE.Vector3();
+        let direction = new THREE.Vector3();
+        let prevTime = performance.now();
+        const gravity = 9.8;
         let canJump = false;
-
-        const velocity = new THREE.Vector3();
-        const direction = new THREE.Vector3();
 
         init();
         animate();
@@ -53,7 +50,6 @@
 
             // Controls
             controls = new THREE.PointerLockControls(camera, document.body);
-            scene.add(controls.getObject());
 
             document.addEventListener('click', () => {
                 controls.lock();
@@ -80,22 +76,22 @@
                 switch (event.code) {
                     case 'ArrowUp':
                     case 'KeyW':
-                        moveForward = true;
+                        direction.z = -1;
                         break;
                     case 'ArrowLeft':
                     case 'KeyA':
-                        moveLeft = true;
+                        direction.x = -1;
                         break;
                     case 'ArrowDown':
                     case 'KeyS':
-                        moveBackward = true;
+                        direction.z = 1;
                         break;
                     case 'ArrowRight':
                     case 'KeyD':
-                        moveRight = true;
+                        direction.x = 1;
                         break;
                     case 'Space':
-                        if (canJump === true) velocity.y += 5;
+                        if (canJump) velocity.y += 5; // Jump force
                         canJump = false;
                         break;
                 }
@@ -105,19 +101,15 @@
                 switch (event.code) {
                     case 'ArrowUp':
                     case 'KeyW':
-                        moveForward = false;
+                    case 'ArrowDown':
+                    case 'KeyS':
+                        direction.z = 0;
                         break;
                     case 'ArrowLeft':
                     case 'KeyA':
-                        moveLeft = false;
-                        break;
-                    case 'ArrowDown':
-                    case 'KeyS':
-                        moveBackward = false;
-                        break;
                     case 'ArrowRight':
                     case 'KeyD':
-                        moveRight = false;
+                        direction.x = 0;
                         break;
                 }
             };
@@ -138,24 +130,21 @@
             requestAnimationFrame(animate);
 
             const time = performance.now();
-            const delta = (time - prevTime) / 1000;
+            const delta = (time - prevTime) / 1000; // in seconds
 
             velocity.x -= velocity.x * 10.0 * delta;
             velocity.z -= velocity.z * 10.0 * delta;
 
-            velocity.y -= 9.8 * 100.0 * delta; // gravity
+            velocity.y -= gravity * delta; // Apply gravity
 
-            direction.z = Number(moveForward) - Number(moveBackward);
-            direction.x = Number(moveRight) - Number(moveLeft);
-            direction.normalize(); // this ensures consistent movements in all directions
+            direction.normalize();
 
-            if (moveForward || moveBackward) velocity.z -= direction.z * 400.0 * delta;
-            if (moveLeft || moveRight) velocity.x -= direction.x * 400.0 * delta;
+            if (direction.z !== 0) velocity.z -= direction.z * 400.0 * delta;
+            if (direction.x !== 0) velocity.x -= direction.x * 400.0 * delta;
 
             controls.moveRight(-velocity.x * delta);
             controls.moveForward(-velocity.z * delta);
-
-            controls.getObject().position.y += (velocity.y * delta); // new behavior
+            controls.getObject().position.y += velocity.y * delta; // Apply gravity to position
 
             if (controls.getObject().position.y < 10) {
                 velocity.y = 0;
@@ -163,12 +152,10 @@
                 canJump = true;
             }
 
-            renderer.render(scene, camera);
-
             prevTime = time;
-        }
 
-        let prevTime = performance.now();
+            renderer.render(scene, camera);
+        }
     </script>
 </body>
 </html>
