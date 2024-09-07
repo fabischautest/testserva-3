@@ -16,11 +16,6 @@
     <script>
         let camera, scene, renderer, controls;
         let objects = [];
-        let velocity = new THREE.Vector3();
-        let direction = new THREE.Vector3();
-        let prevTime = performance.now();
-        const gravity = 9.8;
-        let canJump = false;
 
         init();
         animate();
@@ -76,46 +71,27 @@
                 switch (event.code) {
                     case 'ArrowUp':
                     case 'KeyW':
-                        direction.z = -1;
+                        controls.moveForward(0.1);
                         break;
                     case 'ArrowLeft':
                     case 'KeyA':
-                        direction.x = -1;
+                        controls.moveRight(-0.1);
                         break;
                     case 'ArrowDown':
                     case 'KeyS':
-                        direction.z = 1;
+                        controls.moveForward(-0.1);
                         break;
                     case 'ArrowRight':
                     case 'KeyD':
-                        direction.x = 1;
+                        controls.moveRight(0.1);
                         break;
                     case 'Space':
-                        if (canJump) velocity.y += 5; // Jump force
-                        canJump = false;
-                        break;
-                }
-            };
-
-            const onKeyUp = function (event) {
-                switch (event.code) {
-                    case 'ArrowUp':
-                    case 'KeyW':
-                    case 'ArrowDown':
-                    case 'KeyS':
-                        direction.z = 0;
-                        break;
-                    case 'ArrowLeft':
-                    case 'KeyA':
-                    case 'ArrowRight':
-                    case 'KeyD':
-                        direction.x = 0;
+                        controls.getObject().position.y += 0.2;
                         break;
                 }
             };
 
             document.addEventListener('keydown', onKeyDown);
-            document.addEventListener('keyup', onKeyUp);
 
             window.addEventListener('resize', onWindowResize);
         }
@@ -128,32 +104,6 @@
 
         function animate() {
             requestAnimationFrame(animate);
-
-            const time = performance.now();
-            const delta = (time - prevTime) / 1000; // in seconds
-
-            velocity.x -= velocity.x * 10.0 * delta;
-            velocity.z -= velocity.z * 10.0 * delta;
-
-            velocity.y -= gravity * delta; // Apply gravity
-
-            direction.normalize();
-
-            if (direction.z !== 0) velocity.z -= direction.z * 400.0 * delta;
-            if (direction.x !== 0) velocity.x -= direction.x * 400.0 * delta;
-
-            controls.moveRight(-velocity.x * delta);
-            controls.moveForward(-velocity.z * delta);
-            controls.getObject().position.y += velocity.y * delta; // Apply gravity to position
-
-            if (controls.getObject().position.y < 10) {
-                velocity.y = 0;
-                controls.getObject().position.y = 10;
-                canJump = true;
-            }
-
-            prevTime = time;
-
             renderer.render(scene, camera);
         }
     </script>
