@@ -16,6 +16,14 @@
     <script>
         let camera, scene, renderer, controls;
         let objects = [];
+        let moveForward = false;
+        let moveBackward = false;
+        let moveLeft = false;
+        let moveRight = false;
+        let canJump = false;
+
+        const velocity = new THREE.Vector3();
+        const direction = new THREE.Vector3();
 
         init();
         animate();
@@ -45,6 +53,7 @@
 
             // Controls
             controls = new THREE.PointerLockControls(camera, document.body);
+            scene.add(controls.getObject());
 
             document.addEventListener('click', () => {
                 controls.lock();
@@ -71,27 +80,50 @@
                 switch (event.code) {
                     case 'ArrowUp':
                     case 'KeyW':
-                        controls.moveForward(0.1);
+                        moveForward = true;
                         break;
                     case 'ArrowLeft':
                     case 'KeyA':
-                        controls.moveRight(-0.1);
+                        moveLeft = true;
                         break;
                     case 'ArrowDown':
                     case 'KeyS':
-                        controls.moveForward(-0.1);
+                        moveBackward = true;
                         break;
                     case 'ArrowRight':
                     case 'KeyD':
-                        controls.moveRight(0.1);
+                        moveRight = true;
                         break;
                     case 'Space':
-                        controls.getObject().position.y += 0.2;
+                        if (canJump === true) velocity.y += 5;
+                        canJump = false;
+                        break;
+                }
+            };
+
+            const onKeyUp = function (event) {
+                switch (event.code) {
+                    case 'ArrowUp':
+                    case 'KeyW':
+                        moveForward = false;
+                        break;
+                    case 'ArrowLeft':
+                    case 'KeyA':
+                        moveLeft = false;
+                        break;
+                    case 'ArrowDown':
+                    case 'KeyS':
+                        moveBackward = false;
+                        break;
+                    case 'ArrowRight':
+                    case 'KeyD':
+                        moveRight = false;
                         break;
                 }
             };
 
             document.addEventListener('keydown', onKeyDown);
+            document.addEventListener('keyup', onKeyUp);
 
             window.addEventListener('resize', onWindowResize);
         }
@@ -104,8 +136,39 @@
 
         function animate() {
             requestAnimationFrame(animate);
+
+            const time = performance.now();
+            const delta = (time - prevTime) / 1000;
+
+            velocity.x -= velocity.x * 10.0 * delta;
+            velocity.z -= velocity.z * 10.0 * delta;
+
+            velocity.y -= 9.8 * 100.0 * delta; // gravity
+
+            direction.z = Number(moveForward) - Number(moveBackward);
+            direction.x = Number(moveRight) - Number(moveLeft);
+            direction.normalize(); // this ensures consistent movements in all directions
+
+            if (moveForward || moveBackward) velocity.z -= direction.z * 400.0 * delta;
+            if (moveLeft || moveRight) velocity.x -= direction.x * 400.0 * delta;
+
+            controls.moveRight(-velocity.x * delta);
+            controls.moveForward(-velocity.z * delta);
+
+            controls.getObject().position.y += (velocity.y * delta); // new behavior
+
+            if (controls.getObject().position.y < 10) {
+                velocity.y = 0;
+                controls.getObject().position.y = 10;
+                canJump = true;
+            }
+
             renderer.render(scene, camera);
+
+            prevTime = time;
         }
+
+        let prevTime = performance.now();
     </script>
 </body>
 </html>
