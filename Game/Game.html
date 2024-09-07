@@ -22,6 +22,7 @@
 
         const gravity = 9.8;
         const playerHeight = 1.75;
+        const mapHeightOffset = 5; // Höhe, um die die Map angehoben wird
 
         init();
         animate();
@@ -69,13 +70,17 @@
             const loader = new THREE.GLTFLoader();
             loader.load('Map.glb', function (gltf) {
                 const map = gltf.scene;
+
+                // Anheben der Map um eine bestimmte Höhe
+                map.position.y += mapHeightOffset;
+
                 scene.add(map);
                 objects.push(map);
 
                 // Set the player's initial position on top of the map
                 const boundingBox = new THREE.Box3().setFromObject(map);
                 const mapHeight = boundingBox.max.y - boundingBox.min.y;
-                camera.position.y = boundingBox.max.y + playerHeight;
+                camera.position.y = boundingBox.max.y + playerHeight + mapHeightOffset;
             });
 
             // Player movement
