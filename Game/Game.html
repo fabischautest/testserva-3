@@ -16,6 +16,12 @@
     <script>
         let camera, scene, renderer, controls;
         let objects = [];
+        let velocity = new THREE.Vector3();
+        let direction = new THREE.Vector3();
+        let isOnGround = false;
+
+        const gravity = 9.8;
+        const playerHeight = 1.75;
 
         init();
         animate();
@@ -32,6 +38,7 @@
 
             // Camera
             camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.y = playerHeight; // Startposition der Kamera in der Höhe
 
             // Lighting
             const light = new THREE.HemisphereLight(0xffffff, 0x444444);
@@ -71,27 +78,48 @@
                 switch (event.code) {
                     case 'ArrowUp':
                     case 'KeyW':
-                        controls.moveForward(0.1);
+                        direction.z = -1;
                         break;
                     case 'ArrowLeft':
                     case 'KeyA':
-                        controls.moveRight(-0.1);
+                        direction.x = -1;
                         break;
                     case 'ArrowDown':
                     case 'KeyS':
-                        controls.moveForward(-0.1);
+                        direction.z = 1;
                         break;
                     case 'ArrowRight':
                     case 'KeyD':
-                        controls.moveRight(0.1);
+                        direction.x = 1;
                         break;
                     case 'Space':
-                        controls.getObject().position.y += 0.2;
+                        if (isOnGround) {
+                            velocity.y += 5; // Sprungkraft
+                            isOnGround = false;
+                        }
+                        break;
+                }
+            };
+
+            const onKeyUp = function (event) {
+                switch (event.code) {
+                    case 'ArrowUp':
+                    case 'KeyW':
+                    case 'ArrowDown':
+                    case 'KeyS':
+                        direction.z = 0;
+                        break;
+                    case 'ArrowLeft':
+                    case 'KeyA':
+                    case 'ArrowRight':
+                    case 'KeyD':
+                        direction.x = 0;
                         break;
                 }
             };
 
             document.addEventListener('keydown', onKeyDown);
+            document.addEventListener('keyup', onKeyUp);
 
             window.addEventListener('resize', onWindowResize);
         }
@@ -104,6 +132,24 @@
 
         function animate() {
             requestAnimationFrame(animate);
+
+            // Schwerkraft anwenden
+            velocity.y -= gravity * 0.02; // Schwerkraft nach unten
+
+            // Bewegung basierend auf der Richtung
+            controls.moveRight(direction.x * 0.1);
+            controls.moveForward(direction.z * 0.1);
+
+            // Spielerposition aktualisieren
+            controls.getObject().position.y += velocity.y * 0.02;
+
+            // Überprüfen, ob der Spieler den Boden erreicht
+            if (controls.getObject().position.y < playerHeight) {
+                velocity.y = 0;
+                controls.getObject().position.y = playerHeight;
+                isOnGround = true;
+            }
+
             renderer.render(scene, camera);
         }
     </script>
