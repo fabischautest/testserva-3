@@ -71,6 +71,11 @@
                 const map = gltf.scene;
                 scene.add(map);
                 objects.push(map);
+
+                // Set the player's initial position on top of the map
+                const boundingBox = new THREE.Box3().setFromObject(map);
+                const mapHeight = boundingBox.max.y - boundingBox.min.y;
+                camera.position.y = boundingBox.max.y + playerHeight;
             });
 
             // Player movement
@@ -78,19 +83,19 @@
                 switch (event.code) {
                     case 'ArrowUp':
                     case 'KeyW':
-                        direction.z = -1;
+                        direction.z = 1; // W nach vorne (positive Z-Richtung)
                         break;
                     case 'ArrowLeft':
                     case 'KeyA':
-                        direction.x = -1;
+                        direction.x = -1; // A nach links (negative X-Richtung)
                         break;
                     case 'ArrowDown':
                     case 'KeyS':
-                        direction.z = 1;
+                        direction.z = -1; // S nach hinten (negative Z-Richtung)
                         break;
                     case 'ArrowRight':
                     case 'KeyD':
-                        direction.x = 1;
+                        direction.x = 1; // D nach rechts (positive X-Richtung)
                         break;
                     case 'Space':
                         if (isOnGround) {
